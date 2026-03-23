@@ -1,0 +1,68 @@
+{
+  "skill_name": "cloud-cost-analysis",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "generate-report",
+      "prompt": "重新生成分析报告，帮我看下云资源成本情况",
+      "expected_output": "生成 HTML 报告文件，包含3张图表和动态文字结论",
+      "files": [],
+      "assertions": [
+        {
+          "name": "html_report_generated",
+          "description": "outputs 目录中存在 .html 文件"
+        },
+        {
+          "name": "html_has_three_charts",
+          "description": "HTML 文件中包含至少3个 base64 编码的图片（img src=data:image/png;base64）"
+        },
+        {
+          "name": "response_mentions_report",
+          "description": "response.txt 中提到报告已生成或完成"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "eval_name": "modify-threshold",
+      "prompt": "超卖分析的阈值太严了，把分配率门槛从75%改成70%，重新出报告",
+      "expected_output": "修改 analysis3_oversell.py 中的阈值从 0.75 改为 0.70，重新生成 HTML 报告",
+      "files": [],
+      "assertions": [
+        {
+          "name": "html_report_generated",
+          "description": "outputs 目录中存在 .html 文件"
+        },
+        {
+          "name": "threshold_changed_to_70",
+          "description": "response.txt 中提到 70% 或 0.70，确认修改了正确的阈值"
+        },
+        {
+          "name": "correct_file_modified",
+          "description": "response.txt 中提到修改了 analysis3_oversell.py，而非其他文件"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "az-diagnosis",
+      "prompt": "华北-北京一的az1成本为什么这么高？给我具体分析一下原因",
+      "expected_output": "查询数据库，对比各AZ成本，用实际数字解释az1高成本原因，指出DC成本是主因",
+      "files": [],
+      "assertions": [
+        {
+          "name": "uses_actual_data",
+          "description": "response.txt 包含具体数字（如百分比、万元等），不是泛泛而谈"
+        },
+        {
+          "name": "identifies_dc_cost_as_cause",
+          "description": "response.txt 提到 DC 成本是 az1 成本偏高的主要原因"
+        },
+        {
+          "name": "compares_multiple_azs",
+          "description": "response.txt 中对比了 az1 与其他 AZ（az2/az3）的具体数据"
+        }
+      ]
+    }
+  ]
+}

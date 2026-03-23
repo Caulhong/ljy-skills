@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>云资源成本经营分析报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:        #F0F4F8;
+  --surface:   #FFFFFF;
+  --surface2:  #F7F9FC;
+  --border:    #E2E8F0;
+  --border2:   #CBD5E1;
+  --navy:      #1E3A5F;
+  --blue:      #2563EB;
+  --blue-light:#EFF6FF;
+  --blue-mid:  #BFDBFE;
+  --red:       #DC2626;
+  --red-light: #FEF2F2;
+  --red-mid:   #FECACA;
+  --amber:     #B45309;
+  --amber-light:#FFFBEB;
+  --amber-mid: #FDE68A;
+  --green:     #047857;
+  --green-light:#ECFDF5;
+  --green-mid: #A7F3D0;
+  --gray-light:#F8FAFC;
+  --text:      #1E293B;
+  --text2:     #475569;
+  --text3:     #94A3B8;
+  --mono:      'DM Mono', 'SF Mono', monospace;
+  --sans:      'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --radius:    8px;
+  --shadow:    0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  line-height:1.65;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+.wrap{max-width:1080px;margin:0 auto;padding:44px 32px 80px}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.report-header{
+  background:var(--navy);
+  border-radius:12px;
+  padding:32px 36px;
+  margin-bottom:28px;
+  position:relative;
+  overflow:hidden;
+}
+.report-header::after{
+  content:'';
+  position:absolute;right:-40px;top:-60px;
+  width:260px;height:260px;
+  border-radius:50%;
+  background:rgba(255,255,255,.04);
+  pointer-events:none;
+}
+.report-header::before{
+  content:'';
+  position:absolute;right:80px;bottom:-80px;
+  width:180px;height:180px;
+  border-radius:50%;
+  background:rgba(255,255,255,.03);
+  pointer-events:none;
+}
+.report-eyebrow{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.5);
+  margin-bottom:10px;
+}
+h1{
+  font-size:26px;
+  font-weight:700;
+  color:#FFFFFF;
+  letter-spacing:-.01em;
+  line-height:1.25;
+  margin-bottom:14px;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 0;
+}
+.meta-item{
+  font-family:var(--mono);
+  font-size:11.5px;
+  color:rgba(255,255,255,.55);
+  padding:3px 12px;
+  border-right:1px solid rgba(255,255,255,.15);
+}
+.meta-item:first-child{padding-left:0}
+.meta-item:last-child{border-right:none}
+
+/* ── KPI Cards ──────────────────────────────────────────────────── */
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+  margin-bottom:28px;
+}
+@media(max-width:860px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+.kpi{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px 20px 16px;
+  box-shadow:var(--shadow);
+  position:relative;
+  border-top:3px solid var(--kpi-color, var(--blue));
+}
+.kpi .num{
+  font-family:var(--mono);
+  font-size:28px;
+  font-weight:500;
+  color:var(--kpi-color, var(--blue));
+  line-height:1;
+  margin-bottom:5px;
+}
+.kpi .lbl{
+  font-size:12px;
+  color:var(--text2);
+  font-weight:500;
+}
+.kpi-warn  {--kpi-color: var(--amber)}
+.kpi-danger{--kpi-color: var(--red)}
+.kpi-ok    {--kpi-color: var(--green)}
+
+/* ── Section Headers ────────────────────────────────────────────── */
+.section-header{
+  display:flex;align-items:center;gap:12px;
+  margin:36px 0 14px;
+}
+.section-num{
+  font-family:var(--mono);
+  font-size:12px;
+  font-weight:500;
+  background:var(--navy);
+  color:#fff;
+  width:26px;height:26px;
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.section-title{
+  font-size:16px;
+  font-weight:700;
+  color:var(--navy);
+  letter-spacing:-.01em;
+  flex:1;
+}
+.section-title::after{
+  content:'';display:block;
+  height:2px;
+  background:linear-gradient(90deg, var(--border2) 0%, transparent 80%);
+  margin-top:8px;
+}
+.section-final{
+  font-size:16px;font-weight:700;color:var(--navy);
+  margin:36px 0 14px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-final::before{
+  content:'';
+  display:inline-block;width:4px;height:18px;
+  background:var(--amber);border-radius:2px;
+}
+
+/* Sub-headers */
+h3{
+  font-size:12px;
+  font-weight:600;
+  color:var(--text3);
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  margin:22px 0 10px;
+  display:flex;align-items:center;gap:8px;
+}
+h3::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Stage pills */
+.stage-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:600;
+  padding:3px 10px;border-radius:20px;
+  margin-bottom:12px;
+}
+.sp-amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-mid)}
+.sp-blue {background:var(--blue-light); color:var(--blue); border:1px solid var(--blue-mid)}
+.sp-green{background:var(--green-light);color:var(--green);border:1px solid var(--green-mid)}
+.sp-red  {background:var(--red-light);  color:var(--red);  border:1px solid var(--red-mid)}
+
+/* ── Cards ──────────────────────────────────────────────────────── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:22px 24px;
+  box-shadow:var(--shadow);
+  margin-bottom:14px;
+}
+
+/* ── Insight boxes ───────────────────────────────────────────────── */
+.insight{
+  border-radius:6px;
+  padding:12px 16px;
+  margin:12px 0;
+  font-size:13.5px;
+  line-height:1.75;
+  display:flex;gap:10px;align-items:flex-start;
+  border-left:3px solid transparent;
+}
+.insight-icon{flex-shrink:0;font-size:14px;margin-top:2px}
+.insight strong{font-weight:700}
+.i-blue  {background:var(--blue-light); border-left-color:var(--blue);  color:var(--navy)}
+.i-red   {background:var(--red-light);  border-left-color:var(--red);   color:#7F1D1D}
+.i-green {background:var(--green-light);border-left-color:var(--green); color:#064E3B}
+.i-amber {background:var(--amber-light);border-left-color:var(--amber); color:#78350F}
+.i-gray  {background:var(--gray-light); border-left-color:var(--border2);color:var(--text2)}
+
+/* ── Tables ─────────────────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+thead th{
+  background:var(--surface2);
+  color:var(--text2);
+  font-family:var(--mono);
+  font-size:10.5px;
+  font-weight:500;
+  text-transform:uppercase;
+  letter-spacing:.09em;
+  padding:9px 12px;
+  border-bottom:2px solid var(--border);
+  border-top:1px solid var(--border);
+  text-align:left;
+}
+tbody td{
+  padding:9px 12px;
+  border-bottom:1px solid var(--border);
+  color:var(--text);
+}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even) td{background:var(--gray-light)}
+tbody tr:hover td{background:var(--blue-light);transition:background .12s}
+
+/* ── Scatter filter controls ─────────────────────────────────────── */
+.scatter-wrap{ margin:16px 0; }
+.scatter-filters{
+  display:flex; gap:12px; flex-wrap:wrap;
+  margin-bottom:10px; align-items:center;
+  font-size:13px; color:var(--text2);
+}
+.scatter-filters span{ font-weight:600; color:var(--text); margin-right:4px; }
+.scatter-cb{
+  display:flex; align-items:center; gap:6px;
+  cursor:pointer; user-select:none;
+  padding:4px 10px; border-radius:20px;
+  border:1.5px solid var(--border2);
+  background:var(--surface2);
+  transition:border-color .15s, background .15s;
+}
+.scatter-cb:hover{ border-color:var(--blue); background:var(--blue-light); }
+.scatter-cb input{ display:none; }
+.scatter-cb .dot{
+  width:10px; height:10px; border-radius:50%;
+  flex-shrink:0; transition:opacity .15s;
+}
+.scatter-cb.unchecked{ opacity:.5; }
+
+/* ── Table-chart interaction ─────────────────────────────────────── */
+.ms-row{ cursor:pointer; transition:background .1s; }
+.ms-row-on td{
+  background:#FEF2F2 !important;
+  box-shadow: inset 3px 0 0 #DC2626;
+}
+
+/* ── Charts ─────────────────────────────────────────────────────── */
+.chart{
+  margin:16px 0;
+  border-radius:6px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  text-align:center;
+  background:#fff;
+}
+.chart img{max-width:100%;display:block;margin:0 auto}
+
+/* ── Priority tags ───────────────────────────────────────────────── */
+.tag{
+  display:inline-block;
+  font-family:var(--mono);
+  font-size:10.5px;
+  font-weight:500;
+  padding:2px 7px;
+  border-radius:4px;
+  letter-spacing:.03em;
+}
+.r {background:var(--red-light);  color:var(--red);   border:1px solid var(--red-mid)}
+.y {background:var(--amber-light);color:var(--amber); border:1px solid var(--amber-mid)}
+.g {background:var(--green-light);color:var(--green); border:1px solid var(--green-mid)}
+.gr{background:var(--gray-light); color:var(--text2); border:1px solid var(--border)}
+
+/* ── Tabs ─────────────────────────────────────────────────────── */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:18px}
+.tab-btn{
+  font-family:var(--sans);font-size:13px;font-weight:600;
+  color:var(--text2);background:none;border:none;
+  padding:9px 18px;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-2px;
+  transition:color .15s,border-color .15s;white-space:nowrap;
+}
+.tab-btn:hover{color:var(--navy)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+footer{
+  text-align:center;
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--text3);
+  margin-top:56px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+  letter-spacing:.04em;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ── Header ───────────────────────────────────────────────────── -->
+<div class="report-header">
+  <div class="report-eyebrow">Cloud Resource Cost Analysis Report</div>
+  <h1>云资源成本经营分析报告</h1>
+  <div class="meta">
+    <span class="meta-item">数据月份 __LATEST_MONTH__</span>
+    <span class="meta-item">10 Region × 3 AZ × 10 资源类型</span>
+    <span class="meta-item">全阶段分析</span>
+    <span class="meta-item">单位：万元</span>
+  </div>
+</div>
+
+<!-- ── KPI ──────────────────────────────────────────────────────── -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="num">__TOTAL_POOLS__</div>
+    <div class="lbl">资源池总数</div>
+  </div>
+  <div class="kpi">
+    <div class="num">__AVG_GM__</div>
+    <div class="lbl">整体平均毛利率</div>
+  </div>
+  <div class="kpi kpi-warn">
+    <div class="num">__PROB_COUNT__</div>
+    <div class="lbl">主力售卖异常池</div>
+  </div>
+  <div class="kpi kpi-danger">
+    <div class="num">__DECOM_COUNT__</div>
+    <div class="lbl">建议下线（退出整合）</div>
+  </div>
+  <div class="kpi kpi-ok">
+    <div class="num">__OVERSELL_COUNT__</div>
+    <div class="lbl">超卖机会池</div>
+  </div>
+</div>
+
+<!-- ── 分析1 ─────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <span class="section-num">1</span>
+  <span class="section-title">同 Region 不同 AZ 成本差异 — 非算力成本拆解</span>
+</div>
+<div class="card">
+  <div class="insight i-blue">
+    <span class="insight-icon">📊</span>
+    <div><strong>结论：</strong>__AZ1_INSIGHT__</div>
+  </div>
+
+  <!-- Tab 导航 -->
+  <div class="tabs" id="az-tabs">
+    <button class="tab-btn active" onclick="switchTab('az-tabs','region')">Region 维度</button>
+    <button class="tab-btn" onclick="switchTab('az-tabs','rtype')">Region 维度 × 资源类型</button>
+  </div>
+
+  <!-- Tab 1：Region 维度 -->
+  <div class="tab-panel active" id="az-tabs-region">
+    <div class="chart"><img src="data:image/png;base64,__CHART1__"></div>
+    <table>
+      <thead><tr><th>Region</th><th>az1 总成本溢价</th><th>az1 DC成本溢价</th><th>差异性质</th><th>成本根因</th><th>建议</th></tr></thead>
+      <tbody>__DC_PREM_ROWS__</tbody>
+    </table>
+    <div class="insight i-gray" style="margin-top:14px">
+      <span class="insight-icon">🔍</span>
+      <div><strong>差异性质判断：</strong>__DIFF_INSIGHT__</div>
+    </div>
+  </div>
+
+  <!-- Tab 2：Region × 资源类型 -->
+  <div class="tab-panel" id="az-tabs-rtype">
+    <div class="chart"><img src="data:image/png;base64,__CHART1B__"></div>
+    __RTYPE_GAP_TABLE__
+  </div>
+
+  <div class="insight i-red" style="margin-top:14px">
+    <span class="insight-icon">⚡</span>
+    <div><strong>牵引策略：</strong>__MIGRATION_HINT__溢价显著的 az1 机房，新售优先安排至低成本 AZ；存量续约可提供迁移激励。</div>
+  </div>
+</div>
+
+<!-- ── 分析2 ─────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <span class="section-num">2</span>
+  <span class="section-title">各阶段资源池经营诊断</span>
+</div>
+
+<div class="card">
+  <div class="stage-pill sp-amber">🟡 起步阶段 — 亏损正常，关注利用率</div>
+  <div class="insight i-amber">
+    <span class="insight-icon">💡</span>
+    <div><strong>分析逻辑：</strong>__INSIGHT_QIBU__</div>
+  </div>
+  __TABLE_QIBU__
+</div>
+
+<div class="card">
+  <div class="stage-pill sp-blue">🔵 主力售卖期 — 高台数-低毛利诊断</div>
+  <div class="insight i-blue">
+    <span class="insight-icon">💡</span>
+    <div><strong>分析逻辑：</strong>台数多理论上摊薄成本更优，毛利应更高。高台数-低毛利说明存在
+    <strong>成本偏高</strong>（AZ溢价）或<strong>流水偏低</strong>（分配率低）两类问题。</div>
+  </div>
+  __CHART2_MS__
+  __TABLE_MS__
+  <div class="insight i-red" style="margin-top:14px">
+    <span class="insight-icon">🔎</span>
+    <div><strong>根因：</strong>__INSIGHT_MS__流水偏低型建议排查销售策略或结合超卖提升流水；成本偏高型建议评估 AZ 迁移可行性。</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="chart"><img src="data:image/png;base64,__CHART2_OTHER__"></div>
+  <h3>存量经营详情</h3>
+  <div class="stage-pill sp-green">🟢 存量经营</div>
+  <div class="insight i-green">
+    <span class="insight-icon">📈</span>
+    <div><strong>存量经营：</strong>__INSIGHT_CUNLIANG__</div>
+  </div>
+  __TABLE_CUNLIANG__
+  <h3>退出整合详情</h3>
+  <div class="stage-pill sp-red">🔴 退出整合</div>
+  <div class="insight i-red">
+    <span class="insight-icon">⚠️</span>
+    <div><strong>退出整合：</strong>__INSIGHT_QIECHU__</div>
+  </div>
+  __TABLE_QIECHU__
+</div>
+
+<!-- ── 分析3 ─────────────────────────────────────────────────────── -->
+<div class="section-header">
+  <span class="section-num">3</span>
+  <span class="section-title">高分配率 · 低 CPU — 超卖空间识别（前三阶段大资源池）</span>
+</div>
+<div class="card">
+  <div class="insight i-green">
+    <span class="insight-icon">🚀</span>
+    <div><strong>机会：</strong>分配率≥75% 但 CPU≤35% 的资源池，客户购而不用，具备超卖空间。
+    仅分析起步/主力售卖/存量经营中台数较大的资源池（退出整合不纳入）。</div>
+  </div>
+  <div class="chart"><img src="data:image/png;base64,__CHART3__"></div>
+  __OVERSELL_TABLE__
+  <div class="insight i-green" style="margin-top:14px">
+    <span class="insight-icon">📋</span>
+    <div><strong>建议：</strong>__OVERSELL_INSIGHT__</div>
+  </div>
+</div>
+
+<!-- ── 综合建议 ────────────────────────────────────────────────────── -->
+<div class="section-final">综合建议</div>
+<div class="card">
+  <table>
+    <thead><tr><th>优先级</th><th>问题</th><th>涉及范围</th><th>动作</th></tr></thead>
+    <tbody>__SUMMARY_ROWS__</tbody>
+  </table>
+</div>
+
+<footer>基于 hw1.cloud_cost 自动生成 &nbsp;·&nbsp; 数据单位：万元</footer>
+</div>
+<script>
+function switchTab(groupId, panelKey) {
+  var group = document.getElementById(groupId);
+  var btns  = group.querySelectorAll('.tab-btn');
+  var panels= document.querySelectorAll('[id^="' + groupId + '-"]');
+  btns.forEach(function(b){ b.classList.remove('active') });
+  panels.forEach(function(p){ p.classList.remove('active') });
+  event.target.classList.add('active');
+  document.getElementById(groupId + '-' + panelKey).classList.add('active');
+}
+</script>
+</body>
+</html>
